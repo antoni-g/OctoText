@@ -35,6 +35,7 @@ class OctoTextPlugin(
     last_fired = None
     prusa_folder = ""
     cura_folder = ""
+    last_interval_sent = None
 
     def email_message_queue_worker(self):
         """
@@ -121,6 +122,8 @@ class OctoTextPlugin(
             "en_printfail": False,
             "en_printpaused": True,
             "en_printresumed": False,
+            "en_internal": False,
+            "en_interval_time": 10,
             "show_navbar_button": True,
             "show_fail_cancel": False,
             "mmu_timeout": 0,
@@ -729,6 +732,36 @@ class OctoTextPlugin(
         self.stopme.clear()
         Thread(target=self.time_thread, daemon=True, args=(self.stopme,)).start()
         return
+
+    # ~~ A simple function to check the status of interval based notifications. 
+    # ~~ We stay away from using existing threads and keep a simple one dedicated to this functionality
+    stop_interval_thread = threading.Event()
+    last_sent = datetime.datetime.now()
+
+    def interval_settings_checker(self):
+        """
+        Checks to see if interval notifications are enabled every 60 seconds
+        if they are, send a notification with any available data and update the last sent interval time 
+        """
+        while True:
+            if (self._settings.get(["en_interval"])):
+                current_time = datetime.datetime.now()
+                interval_time_delta =  datetime.timedelta(minutes=self._settings.get(["en_interval_time"]))
+                if current_time - self.last_interval_sent > interval_time_delta:
+                    self.send_interval_notification()
+                    self.last_interval_sent = self.last_interval_sent + interval_time_delta
+            time.sleep(60)
+
+    def send_interval_notification(self):
+        if (self._printer & self._printer.get_current_data()):
+            progr = self._printer.get_current_data()["progress"]
+            time_left = datetime.timedelta(seconds=int(progr["printTimeLeft"]))
+            title = "Print Progress " + str(time_left) + " time to finish."
+            printer_name = self.get_printer_name()
+        else:
+            title = "Printer not currently running"
+        description = self.current_path
+        self._prepare_email_message_and_send(title, description, printer_name, None, self._settings.get(["en_webcam"]))
 
     # ~~ EventPlugin API
 

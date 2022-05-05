@@ -213,6 +213,22 @@
             </div>
         </div>
 
+        <label class="checkbox" data-bind="visible: settings.settings.plugins.OctoText.en_interval" >
+            <input type="checkbox" value="Time based progress notification" data-bind="checked: settings.settings.plugins.OctoText.en_interval">
+            Enable notifications on a time-based interval that happen whether or not the printer is running, as long as Octopi is running. Includes webcam and print progress, if available. 
+        </label>
+        <div class="control-group" data-bind="visible: settings.settings.plugins.OctoText.en_interval()">
+        <label class="control-label">{{ _('Time Interval (minutes)') }}</label>
+            <div class="controls">
+                <input class="input-mini" type="number" min="10" max="120" data-bind="value: settings.settings.plugins.OctoText.en_interval_time" required>
+                <span class="help-block">{% trans %}
+                        Set the time interval for texts to be sent regardless of print status - for example, every 10 minutes.
+                        The minumum frequency is 10 minutes (6 emails or texts an hour), the maximum is 120 minutes (one email/text every 2 hours).
+                    {% endtrans %}
+                </span>
+            </div>
+        </div>
+
         <legend>{{ _('Test it!') }}</legend>
         <label class="checkbox">
             <input type="checkbox" value="Progress notifications" data-bind="checked: settings.settings.plugins.OctoText.show_navbar_button">
